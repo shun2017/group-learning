@@ -1,0 +1,316 @@
+---
+title: "Chapter2 part4"
+author: "P.S."
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### 2.12 文本、字符串和模式匹配
+
+在R中， 字符串由双引号定义：
+
+```{r}
+a <- "abc"
+b <- "123"
+c <- c(3,4,5)
+```
+
+数字可以强制转换为字符(如上文b所示)，但非数字字符不能强制转换为数字:
+
+```{r}
+as.character(c)
+
+as.numeric(a)
+as.numeric(b)
+```
+
+字符串最初令人困惑的事情之一是字符对象(向量)的长度与组成该对象的字符串中的字符数(nchar)之间的区别:
+
+```{r}
+pets <- c("cat","dog","gerbil","terrapin")
+```
+
+pets向量的长度：
+```{r}
+length(pets)
+```
+
+字符串的长度：
+```{r}
+nchar(pets)
+```
+
+R中有两个内置的向量，包含26个字母的小写(letters)和大写(LETTERS):
+```{r}
+letters
+
+LETTERS
+```
+
+要找出字母n是向量中的第多少个元素，可以使用which函数:
+```{r}
+which(letters=="n")
+```
+
+如果想要字符向量没有引号，可以使用noquote函数：
+```{r}
+noquote(letters)
+```
+
+#### 2.12.1 将字符串粘贴在一起
+
+可以把个别字符串合并成字符向量:
+```{r}
+c(a,b)
+```
+
+如何想将两个字符串合并在一起，可以使用paste函数：
+```{r}
+paste(a,b,sep="")
+```
+
+第三个参数sep=""，表示将两个字符串粘贴在一起，中间不需要任何分隔符。paste的默认方式是插入一个空格:
+```{r}
+paste(a,b)
+```
+
+注意，在粘贴中使用sep=""选项时，不会丢失字符串中的空格。
+```{r}
+paste(a,b," a longer phrase containing blanks",sep="")
+```
+
+如果要粘贴的参数之一是向量，则将向量的每个元素粘贴到指定的字符串中，以生成相同长度的对象:
+```{r}
+d <- c(a,b,"new")
+e <- paste(d,"a longer phrase containing blanks")
+e
+```
+
+paste函数有很多用处，比如说，我们在批量的读取网页时：
+```{r }
+myurl <- paste("http://journal.psych.ac.cn/xlxb/CN/10.3724/SP.J.1041.2018.0", 1,2,2,4, sep = "")
+```
+
+#### 2.12.2 提取字符串
+
+首先，我们假设有一条短信：
+```{r}
+phrase <- "the quick brown fox jumps over the lazy dog"
+```
+
+substr的函数用于从字符串中提取指定数量字符的子字符串。我们用一个循环的形式来说明它的用法：
+```{r}
+q <- character(20)
+for (i in 1:20) q[i] <- substr(phrase,1,i)
+q
+```
+substr中的第二个参数是提取开始的地方(在本例中始终是第一个字符)，第三个参数是提取结束的地方(在本例中是第i个)。
+
+#### 2.12.3 在字符串中计数
+
+计算字符串中的字符总数再简单不过了;直接使用nchar函数:
+```{r}
+nchar(phrase)
+```
+
+为了搞清楚具体是哪些字符，需要将字符串分割成独立字符(43个字符)，使用strsplit如下:
+```{r}
+strsplit(phrase,split=character(0))
+```
+
+还可以计算，每个字符被使用了几次：
+```{r}
+table(strsplit(phrase,split=character(0)))
+```
+
+结果表明，所有的字母在我们的短信中至少使用了一次，而在称为短信的字符串中有8个空格。还可以通过这一现象来计算句子中的单词数（因为2个单词之间有1个空格，3个单词之间有2个空格，以此类推）：
+```{r}
+words <- 1+table(strsplit(phrase,split=character(0)))[1]
+words
+```
+
+
+还可以使用strsplit函数将字符串分开，例如，可以按空格将短信中的单词分开：
+```{r}
+strsplit(phrase, " ")
+
+table(lapply(strsplit(phrase, " "), nchar))
+```
+一共有4个三字母单词，2个四字母单词，3个五字母单词。
+
+综合上述的函数，我们还可以将句子完全翻过来，加上rev函数：
+```{r}
+strsplit(phrase,NULL)
+
+lapply(strsplit(phrase,NULL),rev)
+
+sapply(lapply(strsplit(phrase, NULL), rev), paste, collapse="")
+```
+
+要将答案还原为单个字符串，需要使用collapse参数。
+
+当我们指定一个特定的字符串(如the)来构成分割的基础时，我们最终得到一个由不包含指定字符串（the）的列表。
+```{r}
+strsplit(phrase,"the")
+```
+
+#### 2.12.4 文本大小写
+
+使用toupper和tolower功能，可以轻松切换大小写:
+```{r}
+toupper(phrase)
+
+tolower(toupper(phrase))
+```
+
+#### 2.12.5 match函数和关系数据库
+
+match函数回答了以下问题:第二个向量中的值在第一个向量中出现(如果有的话)在哪里?它是一个非常重要的函数.
+```{r}
+first <- c(5,8,3,5,3,6,4,4,2,8,8,8,4,4,6)
+second <- c(8,6,4,2)
+match(first,second)
+```
+match生成一个下标向量(索引值)，这些下标是第二个向量中的下标。如果第一个向量的元素不出现在第二个向量的任何地方，则会返回NA。
+
+#### 2.12.6 模式匹配
+
+我们需要一个包含大量文本的dataframe，以使练习:
+```{r}
+wf <- read.table("D:/future_plan/group_learning/Dataset/worldfloras.txt",header=T,stringsAsFactors = F)
+attach(wf)
+names(wf)
+
+Country
+```
+我们可以使用grep函数来取出带有某个字母或字符的国家名称。
+
+```{r}
+Country[grep("R",Country)]
+```
+
+若要将搜索限制以R开头的国家，可使用^字符：
+```{r}
+Country[grep("^R",Country)]
+```
+
+若要选择国家名称包括多个单词且大写R作为其第二个或后续名称的首字母的国家，我们将字符串指定为blank+R:
+```{r}
+Country[grep(" R",Country)]
+```
+
+要找到所有有两个或两个以上名字的国家，只需搜索一个空白的""：
+```{r}
+Country[grep(" ",Country)]
+```
+
+要查找名称以“y”结尾的国家，用$符号:
+```{r}
+Country[grep("y$",Country)]
+```
+
+还可以匹配包括某个字母或数据的字符：
+```{r}
+Country[grep("[C-E]",Country)]
+
+#以C-E为首字母的国家名
+Country[grep("^[C-E]",Country)]
+
+#所有不是以a-t为结束字母的国家名
+Country[-grep("[a-t]$",Country)]
+```
+
+#### 2.12.7 .作为任意字符
+
+```{r}
+Country[grep("^.y",Country)]
+
+#y作为第三个字母
+Country[grep("^..y",Country)]
+
+#y作为第六个字母
+Country[grep("^.{5}y",Country)]
+```
+
+#### 2.12.8 替换字符串中的文本
+
+在R中使用sub和gsub函数进行搜索和替换操作。它们的区别在于sub只修改文本中的第一个相关字符，而gsub则修改所有的。
+```{r}
+text <- c("arm", "leg", "head", "foot", "hand", "hindleg","elbow")
+
+#将所有的小写h修改为H
+gsub("h","H",text)
+
+#使用sub修改
+sub("o","O",text)
+```
+
+另外，还可以向之前一样指定修改的模式
+```{r}
+#不管以任务字母开头的都修改为大写字线O
+gsub("ˆ.","O",text)
+
+
+#将所有的字符都改为大写
+gsub("(\\w*)", "\\U\\1",text, perl=TRUE)
+
+
+gsub("(^\\w)","\\U\\1",text, perl=TRUE)
+```
+
+![](D:/future_plan/group_learning/chapter2/fig1.png)
+
+![](D:/future_plan/group_learning/chapter2/fig2.png)
+
+#### 2.12.9 使用regexpr在向量中定位模式
+
+我们可能想知道某个字符是否出现在字符串中，如果是，它出现在哪里。因此，regexpr的结果是一个数值向量(与上面的grep一样)。如果模式没有出现在字符串中，则regexpr返回的默认值为-1：
+
+```{r}
+regexpr("o",text)
+
+freq <- as.vector(unlist(lapply(gregexpr("o",text),length)))
+present <- ifelse(regexpr("o",text)<0,0,1)
+freq*present
+```
+
+
+#### 2.12.10 使用%in%和which
+
+如果想要了解两个字符向量之间的匹配：
+```{r}
+stock <- c("car","van")
+requests <- c("truck","suv","van","sports","car","waggon","car")
+
+which(requests %in% stock)
+```
+
+如果想要了解具体是匹配的哪个字符：
+```{r}
+requests [which(requests %in% stock)]
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
